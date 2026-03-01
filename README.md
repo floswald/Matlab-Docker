@@ -55,24 +55,27 @@ This checklist worked for me to deploy matlab with pre-installed toolboxes via t
 
 ### Service Creation on SSPcloud
 
-1.  One needs to create a VScode based instance on SSPcloud - choose any available (`vscode-r-python-julia` works. you need `vscode`.)
-   1. The instance needs to be configured _in admin mode_ (setting `Role`)
-   2. Do not supply a custom docker container, leave whatever is the default (that one just runs VScode in admin mode for us)
-   3. Supply an init script that uses kubernetes to launch our new matlab service. The init script I supplied is [https://raw.githubusercontent.com/floswald/onyxia-test/refs/heads/main/initmatlab.sh](https://raw.githubusercontent.com/floswald/onyxia-test/refs/heads/main/initmatlab.sh), edit as need and supply a similar URL to `InitializationScript`. Script:
-      ```
-      #!/bin/bash
-      mc cp s3/floswald/matlab.yaml ~/work/matlab.yaml
-      kubectl apply -f ~/work/matlab.yaml
-      ```
+1.  One needs to create a VScode based instance on SSPcloud - choose any available (`vscode-r-python-julia` works. you need `vscode`.) We will call this the `admin-instance`. `TL;DR:` You can click on [this link](https://datalab.sspcloud.fr/launcher/ide/vscode-r-python-julia?name=admin-vscode-r-python-julia&version=2.5.2&s3=region-79669f20&service.image.custom.version=«mathworks%2Fmatlab%3Ar2025b»&init.personalInit=«https%3A%2F%2Fraw.githubusercontent.com%2Ffloswald%2FMatlab-Docker%2Frefs%2Fheads%2Fmain%2Finitmatlab.sh»&kubernetes.role=«admin»&networking.user.enabled=true&networking.user.ports[0]=-&autoLaunch=true) to launch my exact instance, but for completeness here are the configurations, and the rest of the section explains creation of the service:
+    1. The instance needs to be configured _in admin mode_ (setting `Role`)
+    2. Do not supply a custom docker container, leave whatever is the default (that one just runs VScode in admin mode for us)
+    3. Supply an init script that uses kubernetes to launch our new matlab service. The init script I supplied is [initmatlab.sh](initmatlab.sh), edit as need and supply a similar [URL](https://raw.githubusercontent.com/floswald/Matlab-Docker/refs/heads/main/initmatlab.sh) to `InitializationScript`. Script content:
+        ```
+        #!/bin/bash
+        mc cp s3/floswald/matlab.yaml ~/work/matlab.yaml
+        kubectl apply -f ~/work/matlab.yaml
+        ```
       this just copies the `matlab.yaml` from above from the SSPcloud S3 into the the current instances user space, and uses `kubectl` to launch the new custom service (`matlab`)
-10. Save service configuration in SSPcloud, so you can find it easily in the future.
-11. Launch the VScode instance on SSPcloud. You see VSCode under a URL like `https://user-floswald-468664-0.user.lab.sspcloud.fr`. 
-12. On first run, this will pull your docker image and build it, so it takes a while. On the console of the VScode instance do `kubectl get pods` to see progress.
+2.  Save this service configuration in SSPcloud, so you can find it easily in the future.
+
+## Launch Service on SSPcloud
+
+1.  Launch `admin-instance` on SSPcloud. You see VSCode under a URL like `https://user-floswald-468664-0.user.lab.sspcloud.fr`. 
+2.  On first run, this will pull your docker image and build it, so it takes a while. On the console of the `admin-instance` do `kubectl get pods` to see progress.
     ```bash
     onyxia@vscode-r-python-julia-826144-0:~/work$ kubectl get pods
     NAME                             READY   STATUS              RESTARTS   AGE
     matlab-7ccb98587f-9dbv2          0/1     ContainerCreating   0          3m9s
     ```
-13.  As soon as `kubectl get pods -w` reports `STATUS: Running` for the matlab service, you can point your browser to [https://user-floswald-999999-0.user.lab.sspcloud.fr](https://user-floswald-999999-0.user.lab.sspcloud.fr) and see what gives. If all went well, you will see the matlab login browser.
-14.  The `matlab.yaml` specification sets the ingress point for kubernetes at `https://user-floswald-999999-0.user.lab.sspcloud.fr`, where you will find matlab if successful. Obviously, you may want to change the hostnames in the `matlab.yaml` file. I _think_ you are almost free what goes for `999999-0`, but there may be some checking going on that expects a certain format for this URL - I guess at least the username must be valid.
-15.  You need an institutional login (via your university for instance) that works on mathworks.com. After successful login check that you can see the toolboxes in matlab (go to `Apps`).
+3.   As soon as `kubectl get pods -w` reports `STATUS: Running` for the matlab service, you can point your browser to [https://user-floswald-999999-0.user.lab.sspcloud.fr](https://user-floswald-999999-0.user.lab.sspcloud.fr) and see what gives. If all went well, you will see the matlab login browser.
+4.   The `matlab.yaml` specification sets the ingress point for kubernetes at `https://user-floswald-999999-0.user.lab.sspcloud.fr`, where you will find matlab if successful. Obviously, you may want to change the hostnames in the `matlab.yaml` file. I _think_ you are almost free what goes for `999999-0`, but there may be some checking going on that expects a certain format for this URL - I guess at least the username must be valid.
+5.   You need an institutional login (via your university for instance) that works on mathworks.com. After successful login check that you can see the toolboxes in matlab (go to `Apps`).
