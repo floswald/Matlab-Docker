@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: matlab
+  namespace: user-floswald
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: matlab
+  template:
+    metadata:
+      labels:
+        app: matlab
+    spec:
+      containers:
+      - name: matlab
+        image: floswald/matlab-toolboxes:r2025b
+        args: ["-browser"]
+        ports:
+        - containerPort: 8888
+        volumeMounts:
+        - mountPath: /dev/shm
+          name: shm
+      volumes:
+      - name: shm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: matlab
+  namespace: user-floswald
+spec:
+  selector:
+    app: matlab
+  ports:
+  - name: matlab-proxy
+    port: 8888
+    targetPort: 8888
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: matlab
+  namespace: user-floswald
+spec:
+  ingressClassName: onyxia
+  rules:
+  - host: user-floswald-999999-0.user.lab.sspcloud.fr
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: matlab
+            port:
+              number: 8888
+  tls:
+  - hosts:
+    - user-floswald-999999-0.user.lab.sspcloud.fr
