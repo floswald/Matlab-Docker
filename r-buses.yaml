@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-r-project
+  namespace: user-floswald
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-r-project
+  template:
+    metadata:
+      labels:
+        app: my-r-project
+    spec:
+      containers:
+      - name: my-r-project
+        image: floswald/buslocations:2026-03-14b
+        ports:
+        - containerPort: 8787   # change if not RStudio Server
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-r-project
+  namespace: user-floswald
+spec:
+  selector:
+    app: my-r-project
+  ports:
+  - name: http
+    port: 8787
+    targetPort: 8787
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-r-project
+  namespace: user-floswald
+spec:
+  ingressClassName: onyxia
+  rules:
+  - host: user-floswald-999998-0.user.lab.sspcloud.fr
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: my-r-project
+            port:
+              number: 8787
+  tls:
+  - hosts:
+    - user-floswald-999998-0.user.lab.sspcloud.fr
