@@ -23,4 +23,7 @@ sudo apt update && sudo apt install gettext
 
 #this command subsitutes environment variables in the template with env variables currently in the shell.
 #it is piped into the kubectl command without creating any additional files.
+echo "This is a debug statement to check whether kubectl command is actually run"
 envsubst < ~/work/matlab_template.yaml | kubectl apply -f -
+kubectl get pods
+echo "This is a debug statement to check whether kubectl command is actually run"
