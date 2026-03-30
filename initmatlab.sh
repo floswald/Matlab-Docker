@@ -19,7 +19,7 @@ if ! $(kubectl create secret generic basic-auth --from-literal=auth="${VAULT_TOP
 fi
 
 #command `envsubst` is part of `gettext` package
-sudo apt update && sudo apt install gettext
+sudo apt update && sudo apt install gettext -y
 
 #this command subsitutes environment variables in the template with env variables currently in the shell.
 #it is piped into the kubectl command without creating any additional files.
