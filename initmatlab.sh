@@ -1,6 +1,6 @@
 #!/bin/bash
 
-mc cp s3/${VAULT_TOP_DIR}/matlab.yaml ~/work/matlab.yaml
+mc cp s3/${VAULT_TOP_DIR}/matlab_template.yaml ~/work/matlab_template.yaml
 
 if [ -z "${MATLAB_PASS}" ] ; then
   echo "Error: MATLAB_PASS environment variable is not set."
@@ -17,5 +17,12 @@ if ! $(kubectl create secret generic basic-auth --from-literal=auth="${VAULT_TOP
 	kubectl delete secret basic-auth
 	kubectl create secret generic basic-auth --from-literal=auth="${VAULT_TOP_DIR}:$(openssl passwd -apr1 ${MATLAB_PASS})"
 fi
+
+#command `envsubst` is part of `gettext` package
+sudo apt update && sudo apt install gettext
+
+#this command subsitutes environment variables in the template with env variables currently in the shell.
+#it creates a file `matlab.yaml` with the substitutions applied.
+envsubst < ~/work/matlab_template.yaml > ~/work/matlab.yaml
 
 kubectl apply -f ~/work/matlab.yaml
