@@ -37,20 +37,13 @@ We only talk about points 3- here.
 
 ### Clone this Repo
 
-This will give you access to scripts which you will need to edit. In particular, you need to exchange my username (`floswald`) with your SSPcloud user name with in 2 files:
+This will give you access to a script which you will need to upload to your `s3` bucket (`matlab_template.yaml`).
 
-1. [`initmatlab.sh`](initmatlab.sh) 
-2. [matlab.yaml](matlab.yaml): here you need to change with your username all occurences of
-   1. `namespace: user-floswald`
-   2. `host: user-floswald-999999-0.user.lab.sspcloud.fr`
-
-do *not* change `image: floswald/matlab-toolboxes:r2025b`.
-
-### Upload `matlab.yaml` to SSPcloud storage
+### Upload `matlab_template.yaml` to SSPcloud storage
 
 * File Explorer > My Data
 * Click Upload File
-* Drag and Drop your edited `matlab.yaml`. Will upload into the root of your `s3` storage system on SSPcloud.
+* Drag and Drop `matlab_template.yaml`. Will upload into the root of your `s3` storage system on SSPcloud.
 
 ### Create Your Matlab Service on SSPcloud
 
@@ -59,13 +52,8 @@ do *not* change `image: floswald/matlab-toolboxes:r2025b`.
     2.  *Resources*. Choose the corresponding resources.
     3.  *Persistence*. Choose the size of the disk.
     4.  *Role*. The instance needs to be configured _in admin mode_ .
-    5. *Initialisation Script*. Supply an init script that uses kubernetes to launch our new matlab service. The init script I supplied is [here - initmatlab.sh](initmatlab.sh), edit this as need and supply a similar [URL](https://raw.githubusercontent.com/floswald/Matlab-Docker/refs/heads/main/initmatlab.sh) to `InitializationScript`. Script content (you need to change my user name-see above):
-        ```
-        #!/bin/bash
-        mc cp s3/floswald/matlab.yaml ~/work/matlab.yaml
-        kubectl apply -f ~/work/matlab.yaml
-        ```
-      this just copies the `matlab.yaml` from your SSPcloud S3 into the the current instances user space, and uses `kubectl` to launch the new custom service (`matlab`)
+    5. *Initialisation Script*. Supply an init script that uses kubernetes to launch our new matlab service. The init script I supplied is [here - initmatlab.sh](initmatlab.sh)
+      this copies `matlab_template.yaml` from your SSPcloud S3 into the the current instances user space, and uses `kubectl` to launch the new custom service (`matlab`)
       To get the URL of the script, in github, just click on `raw` top right while viewing the file. Grab that URL and supply to the config.
 2. Insert a *friendly name* in the top of the config panel, so you can find this easier in the future.
 3. Save the service configuration in SSPcloud, so you can find it easily in the future.
@@ -80,7 +68,7 @@ do *not* change `image: floswald/matlab-toolboxes:r2025b`.
     matlab-7ccb98587f-9dbv2          0/1     ContainerCreating   0          3m9s
     ```
 3.   As soon as `kubectl get pods -w` reports `STATUS: Running` for the matlab service, you can point your browser to [https://user-floswald-999999-0.user.lab.sspcloud.fr](https://user-floswald-999999-0.user.lab.sspcloud.fr) and see what gives. If all went well, you will see the matlab login browser.
-4.   The `matlab.yaml` specification sets the ingress point for kubernetes at `https://user-floswald-999999-0.user.lab.sspcloud.fr`, where you will find matlab if successful. Obviously, you may want to change the hostnames in the `matlab.yaml` file. I _think_ you are almost free what goes for `999999-0`, but there may be some checking going on that expects a certain format for this URL - I guess at least the username must be valid.
+4.   The `matlab_template.yaml` specification sets the ingress point for kubernetes at `https://user-${VAULT_TOP_DIR}-999999-0.user.lab.sspcloud.fr`, where you will find matlab if successful. The value of `VAULT_TOP_DIR` is your Onyxia username, so you should change the URL accordingly. I _think_ you are almost free what goes for `999999-0`, but there may be some checking going on that expects a certain format for this URL - I guess at least the username must be valid.
 5.   You need an institutional login (via your university for instance) that works on mathworks.com. After successful login check that you can see the toolboxes in matlab (go to `Apps`).
 
 ## 2. Implementation Details
@@ -107,7 +95,7 @@ This checklist worked for me to deploy matlab with pre-installed toolboxes via t
     ```
     those instructions are from the [matlab docker hub](https://hub.docker.com/r/mathworks/matlab).
 7. `docker push floswald/matlab-toolboxes:r2025b` : make docker image available via docker hub.
-8. `matlab.yaml`: is a kubernetes specification which sets up a service to run on SSPcloud, which uses my container from docker hub. This file needs to be placed on the SSPcloud S3 storage of the user. I followed SSPcloud instructions for storage at [https://datalab.sspcloud.fr/account/storage](https://datalab.sspcloud.fr/account/storage), selecting at the bottom the env var for the `mc` client. Locally, export that env var as `MC_HOST_onyxia`, and use the `mc` client:
+8. `matlab_template.yaml`: is a kubernetes specification which sets up a service to run on SSPcloud, which uses my container from docker hub. This file needs to be placed on the SSPcloud S3 storage of the user. I followed SSPcloud instructions for storage at [https://datalab.sspcloud.fr/account/storage](https://datalab.sspcloud.fr/account/storage), selecting at the bottom the env var for the `mc` client. Locally, export that env var as `MC_HOST_onyxia`, and use the `mc` client:
     ```
     # install client on mac:
     brew install minio/stable/mc
